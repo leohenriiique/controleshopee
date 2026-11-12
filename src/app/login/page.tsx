@@ -15,10 +15,19 @@ export default function Login() {
     e.preventDefault();
     setBusy(true);
     setErro("");
-    const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      setBusy(false);
+      return setErro("Variáveis NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY não configuradas neste deploy. Cadastre na Vercel e faça Redeploy.");
+    }
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password: senha });
     setBusy(false);
-    if (error) setErro("E-mail ou senha inválidos.");
-    else r.replace("/");
+    if (!error) return r.replace("/");
+    const msg = error.message || "";
+    if (/email not confirmed/i.test(msg)) setErro("E-mail ainda não confirmado. No Supabase: Authentication → Users → abra o usuário → Confirm email.");
+    else if (/invalid login credentials/i.test(msg)) setErro("E-mail ou senha incorretos (ou o usuário não existe neste projeto Supabase).");
+    else if (/invalid api key|apikey/i.test(msg)) setErro("Chave do Supabase inválida. Confira a NEXT_PUBLIC_SUPABASE_ANON_KEY na Vercel e faça Redeploy.");
+    else if (/fetch/i.test(msg)) setErro("Não consegui falar com o Supabase. Confira a NEXT_PUBLIC_SUPABASE_URL na Vercel e faça Redeploy.");
+    else setErro(msg);
   }
 
   return (
