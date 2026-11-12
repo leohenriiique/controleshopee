@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+body {
+  background: #f7f7f8;
+  color: #18181b;
+}
+input[type="number"]::-webkit-inner-spin-button { opacity: 0.4; }
